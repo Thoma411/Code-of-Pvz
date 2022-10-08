@@ -1,3 +1,7 @@
+/*
+ * @Author: Thoma4
+ * @Date: 2022-10-08 15:46:35
+ */
 #include <iostream>
 #include <ctime>
 #include <random>
