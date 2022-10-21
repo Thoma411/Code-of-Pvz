@@ -1,7 +1,7 @@
 /*
  * @Author: Thoma4
  * @Date: 2022-10-17 17:33:47
- * @LastEditTime: 2022-10-21 23:14:36
+ * @LastEditTime: 2022-10-21 23:39:06
  */
 #include <iostream>
 #include <ctime>
@@ -85,12 +85,12 @@ int main()
                     hit_digger_times++;
             }
         }
-        // FIXME !修正边界值错误
+        // FIXME !修正边界值错误 忽略时刻352
         if (/*hit_digger_times < hitt_HP ||*/ gametick > digger_eat)
         {
             countEat++;
             // eatTimeArr[ti] = gametick; //添加单次测试结束时间(array)
-            eatTimeArr.push_back(gametick - digger_eat - 1); // 353对应啃食时刻0
+            eatTimeArr.push_back(gametick - digger_eat); // 353对应啃食时刻1
         }
         printf("test num: %d\n", ti + 1);
         // printf("hdt = %d\n", hit_digger_times); //输出结束时的攻击次数
@@ -104,11 +104,12 @@ int main()
     double failp = double(countEat) / double(test_times);
 
     FILE *fpt; //输出测试结果至文本文件
-    fpt = fopen(dfName, "a+");
+    fpt = fopen(dfName, "w+");
     for (int it = 0; it < eatTimeArr.size(); it++)
     {
         // FIXME !修正啃食时间是4的倍数的伤害值错误
-        int eatHP = eatTimeArr[it] / 4 * 4 + 4;
+        int eatHP = (eatTimeArr[it] - 1) / 4 * 4 + 4;
+        //**需要注意的是当前输出的文本文件中, 啃食时间1现在对应矿工存活时间353, 所以伤害为4
         fprintf(fpt, "%d\t%d\n", eatTimeArr[it], eatHP);
     }
     fclose(fpt);
