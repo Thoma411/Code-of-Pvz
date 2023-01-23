@@ -321,7 +321,7 @@ void Script()
 {
     // sglZ();
     // allZ();
-    sldZ();
+    // sldZ();
     // P6
     // for (int wave = 1; wave < 19; ++wave)
     //     if (wave != 9)
@@ -347,12 +347,11 @@ void Script()
     // KeyConnect('V', [=]() { card(M_XPG_8, mouseRow(), mouseCol()); });
     KeyConnect('B', [=]() { pao_operator.recoverPao(2, 8.5); });
     KeyConnect('N', [=]() { pao_operator.recoverPao(5, 8.5); });
-    // P6();
-    // P6_N();
-    // P6_C();
-    // P6_Cplus();
-    // S6();
-    ch6();
+    
+    /*
+    choose the method you want.
+    */
+    
     setTime(-150, 20);
     pao_operator.pao(4, 7.5875);
 
