@@ -1,7 +1,7 @@
 /*
  * @Author: Thoma411
  * @Date: 2023-10-23 18:08:37
- * @LastEditTime: 2023-11-04 23:12:07
+ * @LastEditTime: 2023-11-06 20:01:34
  * @Description: 非逐帧冰杀小偷模拟
  */
 #include <iostream>
@@ -12,7 +12,7 @@
 #include "constVar.h"
 using namespace std;
 
-#define N 10000000 // 000
+#define N 10 // 000000 // 000
 const bool debugFlag = false;
 map<int, int> cntArr;              // 用于保存随机数和对应的出现次数
 default_random_engine eg(time(0)); // 在main函数外部初始化随机数引擎
@@ -62,8 +62,8 @@ int calc_hit_times(int beg_t, int stay_t, bool target = false)
     int atck_rnd = getRnd(186, 200); // 生成下一轮攻击间隔
     if (debugFlag)
         cout << "atck: " << atck_rnd << endl;
-    int rounds = 0, hits = 0;          // 攻击轮数(用于一轮攻击打多发的植物)&攻击次数
-    while (stay_t - atck_rnd > YYG_h1) // 如果能完整的攻击完一轮
+    int rounds = 0, hits = 0;           // 攻击轮数(用于一轮攻击打多发的植物)&攻击次数
+    while (stay_t - atck_rnd >= YYG_h1) // 如果能完整的攻击完一轮
     {
         stay_t -= atck_rnd;          // 更新剩余时间-=本轮攻击间隔
         rounds++;                    // 完整轮数+1
@@ -105,8 +105,8 @@ int debug_hits(int beg_t, int stay_t, int time_cnt, ...) // 不定参数
     int atck_rnd = rndArr[leqt(rdi, time_cnt)]; // 生成下一轮攻击间隔
     if (debugFlag)
         cout << "atck: " << atck_rnd << endl;
-    int rounds = 0, hits = 0;          // 攻击轮数(用于一轮攻击打多发的植物)&攻击次数
-    while (stay_t - atck_rnd > YYG_h1) // 如果能完整的攻击完一轮
+    int rounds = 0, hits = 0;           // 攻击轮数(用于一轮攻击打多发的植物)&攻击次数
+    while (stay_t - atck_rnd >= YYG_h1) // 如果能完整的攻击完一轮
     {
         stay_t -= atck_rnd;                     // 更新剩余时间-=本轮攻击间隔
         rounds++;                               // 完整轮数+1
@@ -114,7 +114,7 @@ int debug_hits(int beg_t, int stay_t, int time_cnt, ...) // 不定参数
         if (debugFlag)
             printf("round: %d, atck: %d\n", rounds, atck_rnd);
     }
-    if (stay_t >= YYG_h1 && stay_t < YYG_h2) // 74(衔接L34的判定) <= 剩余时间 < 102
+    if (stay_t >= YYG_h1 && stay_t < YYG_h2) // 74(衔接L101的判定) <= 剩余时间 < 102
         hits += 1;
     else if (stay_t >= YYG_h2 && stay_t < YYG_h3) // 102 <= 剩余时间 < 130
         hits += 2;
@@ -150,6 +150,7 @@ int test2() // 测试2: 原速6曾偷1(单次)
     for (int i = 0; i < yyg_num; i++)
     {
         bgt[i] = getRnd(1, 200);
+        printf("yyg[%d]: rnd: %d\n", i, bgt[i]);
         hts += calc_hit_times(bgt[i], 363);
     }
     int ht6 = calc_hit_times(getRnd(1, 200), 300);
@@ -168,7 +169,20 @@ int test3() // 测试3: 快速测底线损伤
     return hts;
 }
 
-void debug1()
+void debug0()
+{
+    cntArr.clear();
+    int test_r = 0;
+    for (int i = 0; i < N; i++)
+    {
+        test_r = getRnd(186, 200);
+        statistic_rnd(test_r);
+    }
+    for (const auto &pair : cntArr) // 输出每个随机数及其出现次数
+        cout << "rnd: " << pair.first << " times: " << pair.second << endl;
+}
+
+void debug1() // 验证双曾冰杀失败的极端情况
 {
     // int beg_t = 170, stay_t = 300, rnd1 = 186;
     // int deb_ht = debug_hits(beg_t, stay_t, 1, rnd1);
@@ -179,29 +193,43 @@ void debug1()
     //        deb_ht, beg_t, stay_t, rnd1);
 }
 
+void debug2(int beg_n, int end_n, int stay_n) //
+{
+    // printf("debug_hts = %d\n", debug_hits(beg_n, 300, 1, end_n));
+    cntArr.clear();
+    for (int i = beg_n; i <= end_n; i++)
+    {
+        // printf("debug_hts = %d\n", debug_hits(i, 300, 1, end_n));
+        statistic_rnd(debug_hits(i, stay_n, 1, end_n));
+    }
+    for (const auto &pair : cntArr) // 输出每个随机数及其出现次数
+        cout << "rnd: " << pair.first << " times: " << pair.second << endl;
+}
+
 int main()
 {
-    // clock_t test_start, test_finish;
-    // double total_time = 0; // 模拟测试总时长(计算部分)
-    // test_start = clock();
+    clock_t test_start, test_finish;
+    double total_time = 0; // 模拟测试总时长(计算部分)
+    test_start = clock();
 
-    // // int testArr[5] = {}; // 概率分布数组
-    // // int hts = 0;
+    for (int i = 0; i < N; i++)
+        // statistic_rnd(test0(300));
+        statistic_rnd(test2());
 
-    // for (int i = 0; i < N; i++)
-    //     statistic_rnd(test0(300));
+    for (const auto &pair : cntArr) // 输出每个随机数及其出现次数
+        cout << "rnd: " << pair.first << " times: " << pair.second << endl;
 
-    // for (const auto &pair : cntArr) // 输出每个随机数及其出现次数
-    //     cout << "rnd: " << pair.first << " times: " << pair.second << endl;
+    test_finish = clock();
+    total_time = (double)(test_finish - test_start) / CLOCKS_PER_SEC; // 统计n次测试总用时
+    printf("N = %d\ntotal time: %lf (s)\n", N, total_time);
 
-    // test_finish = clock();
-    // total_time = (double)(test_finish - test_start) / CLOCKS_PER_SEC; // 统计n次测试总用时
-    // printf("N = %d\ntotal time: %lf (s)\n", N, total_time);
+    // for (int i = 186; i <= 200; i++)
+    // {
+    //     debug2(1, i, 363);
+    //     printf("\n");
+    // }
 
-    // for (int i = 0; i < 5; i++)
-    //     cout << testArr[i] << " ";
-
-    debug1();
+    // debug0();
 
     // system("pause");
     return 0;
