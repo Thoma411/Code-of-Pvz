@@ -32,6 +32,6 @@
 
 ### 2023_11_13
 
-* 将声明、实现与测试用例分离了出来，将`iceKillBungee.cpp`改为`ialgo.cpp`
+* 将声明、实现与测试用例分离了出来，将`iceKillBungee.cpp`改为`ialgo.cpp`(原先的.cpp已弃用)
 * 添加了一键执行.bat，运行时在终端键入`./run.bat`即可
 * 添加了动曾计算，添加了大喷菇的模拟代码
