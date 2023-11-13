@@ -1,7 +1,7 @@
 /*
  * @Author: Thoma411
  * @Date: 2023-10-23 18:08:37
- * @LastEditTime: 2023-11-06 20:01:34
+ * @LastEditTime: 2023-11-13 16:40:26
  * @Description: 非逐帧冰杀小偷模拟
  */
 #include <iostream>
@@ -12,7 +12,7 @@
 #include "constVar.h"
 using namespace std;
 
-#define N 10 // 000000 // 000
+#define N 1000000 // 000
 const bool debugFlag = false;
 map<int, int> cntArr;              // 用于保存随机数和对应的出现次数
 default_random_engine eg(time(0)); // 在main函数外部初始化随机数引擎
@@ -42,27 +42,71 @@ void statistic_rnd(int num) // 统计(区间)攻击次数的频率
 }
 
 /*
- *计算指定时间内植物的输出伤害(单次)
- *parameter: 落地时的攻击倒计时, 滞留时间, 是否为目标植物x 是动是静
+ *动静特判 仅判断当生成的rnd<=攻击间隔(1,200)的第一轮
+ *返回时间t=rnd条件下本轮的攻击次数
+ *默认停留时间>=200
  */
-int calc_hit_times(int beg_t, int stay_t, bool target = false)
+int QA_judge(int beg_t)
 {
     /*
-     *1.动静判断(默认为静)
+     *对给定的rnd, 划分为确定区间和模糊区间:
+     *对落在确定区间内的rnd, 不用模拟就能得出攻击次数;
+     *对落在模糊区间内的rnd, 再等概率随机生成一个0/1, 为0取小, 为1取大.
+     */
+    if (beg_t <= 0 || beg_t > 200) // rnd超出范围
+        return -999;
+    int hits = 0, ofs = getRnd(0, 1);
+    // 确定区间
+    if (beg_t > 0 && beg_t < 28)
+        hits = 0;
+    else if (beg_t >= 42 && beg_t < 56)
+        hits = 1;
+    else if (beg_t >= 70 && beg_t < 84)
+        hits = 2;
+    else if (beg_t >= 98 && beg_t < 112)
+        hits = 3;
+    else if (beg_t >= 126 && beg_t <= 200)
+        hits = 4;
+    // 模糊区间
+    else if (beg_t >= 28 && beg_t < 42)
+        hits = 0 + ofs;
+    else if (beg_t >= 56 && beg_t < 70)
+        hits = 1 + ofs;
+    else if (beg_t >= 84 && beg_t < 98)
+        hits = 2 + ofs;
+    else if (beg_t >= 112 && beg_t < 126)
+        hits = 3 + ofs;
+    else // 未知错误
+        return -999;
+    return hits;
+}
+
+/*
+ *计算指定时间内植物(目前只有曾)的输出伤害(单次)
+ *parameter: 落地时的攻击倒计时, 滞留时间, 是动是静
+ */
+int calc_hit_times(int beg_t, int stay_t, bool p_stat = false)
+{
+    /*
+     TODO:1.并入动静判断(默认为静)
      *2.计算指定时间内打出的伤害
      *2.1.完整性攻击判定
      *2.2.剩余攻击判定
-     TODO:边界值判定
      *3.返回输出伤害
      */
-    if (stay_t - beg_t < YYG_h1) // 还没开始攻击小偷就溜了
-        return 0;
-    else
-        stay_t -= beg_t;             // 当前剩余攻击时间
+    int rounds = 0, hits = 0; // 攻击轮数(用于一轮攻击打多发的植物)&攻击次数
+    if (!p_stat)              // *静曾首轮判定
+    {
+        if (stay_t - beg_t < YYG_h1) // 还没开始攻击小偷就溜了
+            return 0;
+    }
+    else // *动曾首轮判定
+        hits = QA_judge(beg_t);
+    stay_t -= beg_t; // 计算当前剩余攻击时间
+
     int atck_rnd = getRnd(186, 200); // 生成下一轮攻击间隔
     if (debugFlag)
         cout << "atck: " << atck_rnd << endl;
-    int rounds = 0, hits = 0;           // 攻击轮数(用于一轮攻击打多发的植物)&攻击次数
     while (stay_t - atck_rnd >= YYG_h1) // 如果能完整的攻击完一轮
     {
         stay_t -= atck_rnd;          // 更新剩余时间-=本轮攻击间隔
@@ -128,9 +172,9 @@ int debug_hits(int beg_t, int stay_t, int time_cnt, ...) // 不定参数
     return rounds * 4 + hits;
 }
 
-int test0(int t) // 测试0: 非目标单曾在时间t内的攻击次数
+int test0(int t, bool p_st = false) // 测试0: 非目标单曾在时间t内的攻击次数
 {
-    return calc_hit_times(getRnd(1, 200), t);
+    return calc_hit_times(getRnd(1, 200), t, p_st);
 }
 
 int test1() // 测试1: 冰杀2曾偷1(单次)
@@ -150,21 +194,35 @@ int test2() // 测试2: 原速6曾偷1(单次)
     for (int i = 0; i < yyg_num; i++)
     {
         bgt[i] = getRnd(1, 200);
-        printf("yyg[%d]: rnd: %d\n", i, bgt[i]);
+        // printf("yyg[%d]: rnd: %d\n", i, bgt[i]);
         hts += calc_hit_times(bgt[i], 363);
     }
     int ht6 = calc_hit_times(getRnd(1, 200), 300);
     return hts + ht6;
 }
 
-int test3() // 测试3: 快速测底线损伤
+int test3() // 测试3: 快速测底线损伤(4q)
 {
     int yyg_num = 4, hts = 0;
     int bgt[yyg_num] = {};
     for (int i = 0; i < yyg_num; i++)
     {
         bgt[i] = getRnd(1, 200);
+        // printf("yyg[%d]: rnd: %d\n", i, bgt[i]);
         hts += calc_hit_times(bgt[i], 352);
+    }
+    return hts;
+}
+
+int test4(bool p_st = false) // 测试4: 快速测底线损伤(3q/a)
+{
+    int yyg_num = 3, hts = 0;
+    int bgt[yyg_num] = {};
+    for (int i = 0; i < yyg_num; i++)
+    {
+        bgt[i] = getRnd(1, 200);
+        // printf("yyg[%d]: rnd: %d\n", i, bgt[i]);
+        hts += calc_hit_times(bgt[i], 352, p_st);
     }
     return hts;
 }
@@ -213,8 +271,8 @@ int main()
     test_start = clock();
 
     for (int i = 0; i < N; i++)
-        // statistic_rnd(test0(300));
-        statistic_rnd(test2());
+        // statistic_rnd(test0(300, true));
+        statistic_rnd(test4());
 
     for (const auto &pair : cntArr) // 输出每个随机数及其出现次数
         cout << "rnd: " << pair.first << " times: " << pair.second << endl;
@@ -222,6 +280,9 @@ int main()
     test_finish = clock();
     total_time = (double)(test_finish - test_start) / CLOCKS_PER_SEC; // 统计n次测试总用时
     printf("N = %d\ntotal time: %lf (s)\n", N, total_time);
+
+    // for (int i = 0; i <= 200; i++) // 调试动静(一轮)判定
+    //     printf("i: %d\th: %d\n", i, QA_judge(i));
 
     // for (int i = 186; i <= 200; i++)
     // {
