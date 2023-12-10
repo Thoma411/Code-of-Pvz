@@ -1,7 +1,7 @@
 /*
  * @Author: Thoma411
  * @Date: 2023-10-23 18:08:37
- * @LastEditTime: 2023-11-13 21:34:36
+ * @LastEditTime: 2023-12-10 21:38:13
  * @Description: 非逐帧冰杀小偷模拟
  */
 #include "constVar.h"
@@ -168,12 +168,12 @@ int QAJ_DPG(int beg_t)
         return -999;
     int hits = 0, ofs = getRnd(0, 1);
     // 确定区间
-    if (beg_t > 0 && beg_t < 87) // 136-49
+    if (beg_t > 0 && beg_t < 87) // 0 ~ 136-49
         hits = 0;
-    else if (beg_t >= 101 && beg_t <= 150)
+    else if (beg_t >= 101 && beg_t <= 150) // 150-49 ~ 150
         hits = 1;
     // 模糊区间
-    else if (beg_t >= 87 && beg_t < 101)
+    else if (beg_t >= 87 && beg_t < 101) // 此14cs为rnd波动区间
         hits = 0 + ofs;
     else // 未知错误
         return -999;
@@ -182,7 +182,7 @@ int QAJ_DPG(int beg_t)
 
 int CHT_DPG(int beg_t, int stay_t, bool p_stat)
 {
-    int hits = 0; // 攻击轮数(用于一轮攻击打多发的植物)&攻击次数
+    int hits = 0; // 攻击次数
     if (!p_stat)  // *静喷首轮判定
     {
         if (stay_t - beg_t < 49) // 还没开始攻击小偷就溜了
@@ -201,5 +201,50 @@ int CHT_DPG(int beg_t, int stay_t, bool p_stat)
     }
     if (stay_t >= 49) // 接"还没开始攻击小偷就溜了"判定
         hits += 1;
+    return hits;
+}
+
+int QAJ_BG(int beg_t, int clg_t)
+{
+    if (beg_t <= 0 || beg_t > 300) // rnd超出范围
+        return -999;
+    int hits = 0, ofs = getRnd(0, 1);
+    // 确定区间
+    if (beg_t > 0 && beg_t < 286 - clg_t)
+        hits = 0;
+    else if (beg_t >= 300 - clg_t && beg_t <= 300)
+        hits = 4;
+    // 模糊区间
+    else if (beg_t >= 286 - clg_t && beg_t < 300 - clg_t)
+        hits = 0 + ofs * 4;
+    else // 未知错误
+        return -999;
+    return hits;
+}
+
+int CHT_BG(int beg_t, int stay_t, bool cling, bool p_stat) // *cling: 是否贴脸-默认为是
+{
+    // TODO:减速状态的一二次冰冻判定
+    int hits = 0, clg_t = 35; // 攻击次数&贴脸/远离状态下的命中时机
+    if (!cling)
+        clg_t = 144;
+    if (!p_stat) // *静冰瓜首轮判定
+    {
+        if (stay_t - beg_t < clg_t) // 还没开始攻击小偷就溜了
+            return 0;
+    }
+    else // *动冰瓜首轮判定
+        hits = QAJ_BG(beg_t, clg_t);
+    stay_t -= beg_t; // 去掉首轮 从下一轮开始用while判断hits次数
+
+    int atck_rnd = getRnd(286, 300);   // 生成下一轮攻击间隔
+    while (stay_t - atck_rnd >= clg_t) // 如果能完整的攻击完一轮
+    {
+        stay_t -= atck_rnd; // 更新剩余时间-=本轮攻击间隔
+        hits++;
+        atck_rnd = getRnd(286, 300); // 重新生成攻击间隔随机数
+    }
+    if (stay_t >= clg_t) // 接"还没开始攻击小偷就溜了"判定
+        hits += 4;
     return hits;
 }
