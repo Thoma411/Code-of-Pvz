@@ -241,7 +241,7 @@ int CHT_BG(int beg_t, int stay_t, bool cling, bool p_stat) // *cling: 是否贴�
     while (stay_t - atck_rnd >= clg_t) // 如果能完整的攻击完一轮
     {
         stay_t -= atck_rnd; // 更新剩余时间-=本轮攻击间隔
-        hits++;
+        hits += 4;
         atck_rnd = getRnd(286, 300); // 重新生成攻击间隔随机数
     }
     if (stay_t >= clg_t) // 接"还没开始攻击小偷就溜了"判定
