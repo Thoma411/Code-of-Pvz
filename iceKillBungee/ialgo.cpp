@@ -1,7 +1,7 @@
 /*
  * @Author: Thoma411
  * @Date: 2023-10-23 18:08:37
- * @LastEditTime: 2023-12-10 21:38:13
+ * @LastEditTime: 2023-12-27 21:52:12
  * @Description: 非逐帧冰杀小偷模拟
  */
 #include "constVar.h"
@@ -32,6 +32,16 @@ void statistic_rnd(int num) // 统计(区间)攻击次数的频率
         cntArr[num]++;
     else
         cntArr[num] = 1;
+}
+
+// 统计rnd不超过x时times的加和
+int cmpLeq(int x) 
+{
+    int sum = 0;
+    for (const auto &pair : cntArr)
+        if (pair.first <= x)
+            sum += pair.second;
+    return sum;
 }
 
 /*
@@ -75,7 +85,7 @@ int QAJ_YYG(int beg_t)
 }
 
 /*
- *计算指定时间内植物(目前只有曾)的输出伤害(单次)
+ *计算指定时间内曾的输出伤害(单次)
  *parameter: 落地时的攻击倒计时, 滞留时间, 是动是静
  */
 int CHT_YYG(int beg_t, int stay_t, bool p_stat)
@@ -118,8 +128,8 @@ int CHT_YYG(int beg_t, int stay_t, bool p_stat)
 }
 
 /*
- *计算指定时间内植物的输出伤害(单次)
- *parameter: 落地时的攻击倒计时, 滞留时间, 指定rnd总数, rnd1, rnd2, ...
+ *计算指定时间内曾的输出伤害(单次)
+ *parameter: 落地时的攻击倒计时, 滞留时间, 是动是静, 指定rnd总数, rnd1, rnd2, ...
  */
 int DBG_YYG(int beg_t, int stay_t, bool p_st, int time_cnt, ...) // 不定参数
 {
@@ -204,6 +214,39 @@ int CHT_DPG(int beg_t, int stay_t, bool p_stat)
     return hits;
 }
 
+int DBG_DPG(int beg_t, int stay_t, bool p_st, int time_cnt, ...)
+{
+    va_list rnds; // 指定不定个随机数
+    va_start(rnds, time_cnt);
+    int *rndArr = new int[time_cnt];
+    for (int i = 0; i < time_cnt; i++) // 保存所有指定的攻击间隔rnd到数组
+        rndArr[i] = va_arg(rnds, int);
+    va_end(rnds);
+    int rdi = 0; // rndArr的指针, 指向当前指定的rnd
+
+    int rounds = 0, hits = 0; // 攻击轮数(用于一轮攻击打多发的植物)&攻击次数
+    if (!p_st)                // *静喷首轮判定
+    {
+        if (stay_t - beg_t < YYG_h1) // 还没开始攻击小偷就溜了
+            return 0;
+    }
+    else // *动喷首轮判定
+        hits = QAJ_DPG(beg_t);
+    stay_t -= beg_t; // 计算当前剩余攻击时间
+
+    int atck_rnd = rndArr[leqt(rdi, time_cnt)]; // 生成下一轮攻击间隔
+    while (stay_t - atck_rnd >= 49)             // 如果能完整的攻击完一轮
+    {
+        stay_t -= atck_rnd; // 更新剩余时间-=本轮攻击间隔
+        hits++;
+        atck_rnd = rndArr[leqt(rdi, time_cnt)]; // 重新生成攻击间隔随机数
+    }
+    if (stay_t >= 49) // 接"还没开始攻击小偷就溜了"判定
+        hits += 1;
+    delete rndArr; // 释放rndArr占用的内存
+    return hits;
+}
+
 int QAJ_BG(int beg_t, int clg_t)
 {
     if (beg_t <= 0 || beg_t > 300) // rnd超出范围
@@ -222,9 +265,20 @@ int QAJ_BG(int beg_t, int clg_t)
     return hits;
 }
 
-int CHT_BG(int beg_t, int stay_t, bool cling, bool p_stat) // *cling: 是否贴脸-默认为是
+/*
+ *parameter:
+ *cling: 是否贴脸-默认为是
+ *deVel: 是否减速(二冰)-默认为否
+ *p_stat: 是否工作(永动)-默认为否
+ */
+int CHT_BG(int beg_t, int stay_t, bool cling, bool deVel, bool p_stat)
 {
     // TODO:减速状态的一二次冰冻判定
+    /*
+     *ideas
+     *超过363视为用冰
+     *从stay_t入手. 若在冰生效之前命中, 则stay_t-100
+     */
     int hits = 0, clg_t = 35; // 攻击次数&贴脸/远离状态下的命中时机
     if (!cling)
         clg_t = 144;
@@ -247,4 +301,36 @@ int CHT_BG(int beg_t, int stay_t, bool cling, bool p_stat) // *cling: 是否贴�
     if (stay_t >= clg_t) // 接"还没开始攻击小偷就溜了"判定
         hits += 4;
     return hits;
+}
+
+/*
+ *parameter: 滞留时间, 是否为地刺王-默认为是(否则为地刺), 是否工作(永动)
+ */
+int CHT_DC(int stay_t, bool isDCW, bool p_stat)
+{
+    // TODO:待考虑特殊情况下的连续工作状态, 如被提前触发导致启动时间不固定
+    int rounds = 0, hits = 0, itt = DCW_itv1; // 攻击次数&启动间隔itt = interval_time
+    if (!isDCW)                               // 若为地刺
+        itt = DC_h;
+    while (stay_t - DC_hitv >= DCW_itv1) // 如果能完整的攻击完一轮
+    {
+        stay_t -= DC_hitv; // 更新剩余时间-=本轮攻击间隔
+        rounds++;
+    }
+    if (isDCW) // 地刺王伤害计算
+    {
+        if (stay_t >= DCW_itv1 && stay_t < DCW_itv2) // 30(接"还没开始攻击小偷就溜了"判定) <= 剩余时间 < 68
+            hits += 1;
+        else if (stay_t >= DCW_itv2) // 68 <= 剩余时间 (<101)
+            hits += 2;
+        else // 未知错误
+            return -999;
+        return rounds * 2 + hits;
+    }
+    else // 地刺伤害计算
+    {
+        if (stay_t >= DC_h) // 接"还没开始攻击小偷就溜了"判定
+            hits += 1;
+        return rounds + hits;
+    }
 }

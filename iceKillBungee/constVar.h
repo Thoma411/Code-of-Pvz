@@ -1,7 +1,7 @@
 /*
  * @Author: Thoma411
  * @Date: 2023-10-23 19:22:12
- * @LastEditTime: 2023-11-04 22:32:17
+ * @LastEditTime: 2023-12-27 18:15:40
  * @Description:
  */
 #ifndef _CONSTVAR_H_
@@ -25,5 +25,7 @@ const int nobj_ice_atkt2 = obj_ice_atkt2 + freezeCatch; // 724非目标二冰可
 
 const int YYG_rnd_min = 186, YYG_rnd_max = 200;
 const int YYG_itv = 28, YYG_h1 = 74, YYG_h2 = 102, YYG_h3 = 130, YYG_h4 = 158; // 曾的每发间隔&相对命中时机(倒数)
+
+const int DC_hitv = 101, DC_h = 25, DCW_itv1 = 30, DCW_itv2 = 38; // 地刺类攻击间隔 / 地刺/地刺王相对命中时机
 
 #endif
