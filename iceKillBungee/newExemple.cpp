@@ -1,7 +1,7 @@
 /*
  * @Author: Thoma411
  * @Date: 2023-11-13 17:32:45
- * @LastEditTime: 2024-01-19 19:44:22
+ * @LastEditTime: 2024-01-19 21:00:01
  * @Description: new samples and tests
  */
 #include "interlayer.h"
@@ -45,6 +45,9 @@ int newTest3()
     return hts;
 }
 
+// TODO:可仿照上述newTest函数自行编写测试用例
+int newTest4() {}
+
 void ctest(bool isFreeze, int N, bool detail = true)
 {
     clock_t test_start, test_finish;
@@ -52,7 +55,7 @@ void ctest(bool isFreeze, int N, bool detail = true)
     test_start = clock();
 
     for (int i = 0; i < N; i++)
-        //*新建模拟测试需改写此处参数
+        // TODO:新建模拟测试需改写此处参数
         statistic_rnd(newTest3());
 
     if (detail)
