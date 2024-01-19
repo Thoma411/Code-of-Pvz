@@ -1,10 +1,10 @@
 /*
  * @Author: Thoma411
  * @Date: 2023-11-13 17:32:45
- * @LastEditTime: 2023-12-27 22:12:49
- * @Description: g++ ialgo.cpp test.cpp -o t.exe
+ * @LastEditTime: 2024-01-08 17:27:08
+ * @Description: samples and tests
  */
-#include "ialgo.h"
+#include "interlayer.h"
 
 #define N 1000000 // 10e7
 extern map<int, int> cntArr;
@@ -111,16 +111,16 @@ int test8(int n, int stt = getRnd(699, 899))
     return hts;
 }
 
-// 测试9: 3西瓜
+// !测试9: 3西瓜-该函数因调参过于繁琐而作废 不保证结果准确
 int test9(int n, int stt = getRnd(699, 899))
 {
     int hts = 0, bgt[n - 1] = {};
     for (int i = 0; i < n - 1; i++)
     {
         bgt[i] = getRnd(1, 300);
-        hts += CHT_BG(bgt[i], stt + 125, false);
+        hts += CHT_BG(bgt[i], stt + 125, getRnd(1, 300), false);
     }
-    hts += CHT_BG(getRnd(1, 300), stt, true); // 被偷的
+    hts += CHT_BG(getRnd(1, 300), stt, getRnd(1, 300), true); // 被偷的
     return hts;
 }
 
@@ -196,8 +196,16 @@ void debug3(int beg_n, int end_n, int stay_n)
         cout << "rnd: " << pair.first << " times: " << pair.second << endl;
 }
 
+int newTest1(bool isFreeze)
+{
+    int hts = 0;
+    hts += TEST_YYG(isFreeze, TARGET);
+    hts += TEST_YYG(isFreeze);
+    return hts;
+}
+
 // 通用测试模板
-void ctest()
+void ctest(bool isFreeze, bool detail = true)
 {
     clock_t test_start, test_finish;
     double total_time = 0; // 模拟测试总时长(计算部分)
@@ -205,14 +213,20 @@ void ctest()
 
     for (int i = 0; i < N; i++)
         // statistic_rnd(test6(300, true));
-        statistic_rnd(test7(6));
-    // statistic_rnd(test9(3));
-    // statistic_rnd(test11(getRnd(699, 899)));
+        // statistic_rnd(test7(6));
+        // statistic_rnd(test9(3));
+        // statistic_rnd(test11(getRnd(699, 899)));
+        statistic_rnd(newTest1(isFreeze));
 
-    for (const auto &pair : cntArr) // 输出每个随机数及其出现次数
-        cout << "rnd: " << pair.first << " times: " << pair.second << endl;
+    if (detail)
+        for (const auto &pair : cntArr) // 输出每个随机数及其出现次数
+            cout << "rnd: " << pair.first << " times: " << pair.second << endl;
     //! 若要引用此结果作为概率, 请特别注意是否受冰(受冰21(含), 否则22(含)均算作失败)!
-    int fail = cmpLeq(22);
+    int fail = 0;
+    if (isFreeze) //*若用冰,则IO总伤害<=21为失败; 否则<=22
+        fail = cmpLeq(21);
+    else
+        fail = cmpLeq(22);
     double perct = double(fail) / double(N);
 
     test_finish = clock();
@@ -222,6 +236,6 @@ void ctest()
 
 int main()
 {
-    ctest();
+    ctest(FREEZE);
     // debug3(1, 150, 824);
 }

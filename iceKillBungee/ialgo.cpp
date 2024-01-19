@@ -1,10 +1,9 @@
 /*
  * @Author: Thoma411
  * @Date: 2023-10-23 18:08:37
- * @LastEditTime: 2023-12-27 21:52:12
+ * @LastEditTime: 2024-01-08 19:50:15
  * @Description: 非逐帧冰杀小偷模拟
  */
-#include "constVar.h"
 #include "ialgo.h"
 
 map<int, int> cntArr;              // 用于保存随机数和对应的出现次数
@@ -35,13 +34,33 @@ void statistic_rnd(int num) // 统计(区间)攻击次数的频率
 }
 
 // 统计rnd不超过x时times的加和
-int cmpLeq(int x) 
+int cmpLeq(int x)
 {
     int sum = 0;
     for (const auto &pair : cntArr)
         if (pair.first <= x)
             sum += pair.second;
     return sum;
+}
+
+int jdg_time(int stat)
+{
+    if (stat == TGT_NI)
+        return 300;
+    else if (stat == TGT_BF1)
+        return getRnd(699, 899);
+    else if (stat == TGT_BF2)
+        return getRnd(599, 699);
+    else if (stat == NTG_NIO)
+        return 363;
+    else if (stat == NTG_NIS)
+        return getRnd(363, 425);
+    else if (stat == NTG_BF1)
+        return getRnd(824, 1024);
+    else if (stat == NTG_BF2)
+        return getRnd(724, 824);
+    else
+        return ERR_FLG;
 }
 
 /*
@@ -57,7 +76,7 @@ int QAJ_YYG(int beg_t)
      *对落在模糊区间内的rnd, 再等概率随机生成一个0/1, 为0取小, 为1取大.
      */
     if (beg_t <= 0 || beg_t > 200) // rnd超出范围
-        return -999;
+        return ERR_FLG;
     int hits = 0, ofs = getRnd(0, 1);
     // 确定区间
     if (beg_t > 0 && beg_t < 28)
@@ -80,7 +99,7 @@ int QAJ_YYG(int beg_t)
     else if (beg_t >= 112 && beg_t < 126)
         hits = 3 + ofs;
     else // 未知错误
-        return -999;
+        return ERR_FLG;
     return hits;
 }
 
@@ -123,7 +142,7 @@ int CHT_YYG(int beg_t, int stay_t, bool p_stat)
     else if (stay_t >= YYG_h4) // 158 <= 剩余时间 (<200)
         hits += 4;
     else // 未知错误
-        return -999;
+        return ERR_FLG;
     return rounds * 4 + hits;
 }
 
@@ -167,7 +186,7 @@ int DBG_YYG(int beg_t, int stay_t, bool p_st, int time_cnt, ...) // 不定参数
     else if (stay_t >= YYG_h4) // 158 <= 剩余时间 (<200)
         hits += 4;
     else // 未知错误
-        return -999;
+        return ERR_FLG;
     delete rndArr; // 释放rndArr占用的内存
     return rounds * 4 + hits;
 }
@@ -175,7 +194,7 @@ int DBG_YYG(int beg_t, int stay_t, bool p_st, int time_cnt, ...) // 不定参数
 int QAJ_DPG(int beg_t)
 {
     if (beg_t <= 0 || beg_t > 150) // rnd超出范围
-        return -999;
+        return ERR_FLG;
     int hits = 0, ofs = getRnd(0, 1);
     // 确定区间
     if (beg_t > 0 && beg_t < 87) // 0 ~ 136-49
@@ -186,7 +205,7 @@ int QAJ_DPG(int beg_t)
     else if (beg_t >= 87 && beg_t < 101) // 此14cs为rnd波动区间
         hits = 0 + ofs;
     else // 未知错误
-        return -999;
+        return ERR_FLG;
     return hits;
 }
 
@@ -250,7 +269,7 @@ int DBG_DPG(int beg_t, int stay_t, bool p_st, int time_cnt, ...)
 int QAJ_BG(int beg_t, int clg_t)
 {
     if (beg_t <= 0 || beg_t > 300) // rnd超出范围
-        return -999;
+        return ERR_FLG;
     int hits = 0, ofs = getRnd(0, 1);
     // 确定区间
     if (beg_t > 0 && beg_t < 286 - clg_t)
@@ -261,17 +280,18 @@ int QAJ_BG(int beg_t, int clg_t)
     else if (beg_t >= 286 - clg_t && beg_t < 300 - clg_t)
         hits = 0 + ofs * 4;
     else // 未知错误
-        return -999;
+        return ERR_FLG;
     return hits;
 }
 
 /*
  *parameter:
+ *ice_t: 冰生效时机, 用冰时取值为1~300, 否则为-1(表示不用冰)
  *cling: 是否贴脸-默认为是
- *deVel: 是否减速(二冰)-默认为否
- *p_stat: 是否工作(永动)-默认为否
+ !p_stat: 是否工作(永动)-默认为是
+ deVel: 是否减速(二冰)-默认为否 该项应该由函数自动推断而不是指定状态
  */
-int CHT_BG(int beg_t, int stay_t, bool cling, bool deVel, bool p_stat)
+int CHT_BG(int beg_t, int stay_t, int ice_t, bool cling, bool p_stat)
 {
     // TODO:减速状态的一二次冰冻判定
     /*
@@ -280,14 +300,14 @@ int CHT_BG(int beg_t, int stay_t, bool cling, bool deVel, bool p_stat)
      *从stay_t入手. 若在冰生效之前命中, 则stay_t-100
      */
     int hits = 0, clg_t = 35; // 攻击次数&贴脸/远离状态下的命中时机
-    if (!cling)
+    if (!cling)               // 远离
         clg_t = 144;
     if (!p_stat) // *静冰瓜首轮判定
     {
         if (stay_t - beg_t < clg_t) // 还没开始攻击小偷就溜了
             return 0;
     }
-    else // *动冰瓜首轮判定
+    else // *动冰瓜首轮判定(不论是否被抓, 动瓜一定会命中至少一次)
         hits = QAJ_BG(beg_t, clg_t);
     stay_t -= beg_t; // 去掉首轮 从下一轮开始用while判断hits次数
 
@@ -324,7 +344,7 @@ int CHT_DC(int stay_t, bool isDCW, bool p_stat)
         else if (stay_t >= DCW_itv2) // 68 <= 剩余时间 (<101)
             hits += 2;
         else // 未知错误
-            return -999;
+            return ERR_FLG;
         return rounds * 2 + hits;
     }
     else // 地刺伤害计算
