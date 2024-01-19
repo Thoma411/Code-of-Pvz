@@ -12,7 +12,7 @@
 
 ## 使用方法
 
-1. 下载以下运行必要文件至同一目录中:
+1. 在[Releases](https://github.com/Thoma411/Code-of-Pvz)下载`IKB_240119.zip`并解压，保证以下运行必要文件在同一目录中:
     * `constVar.h`
     * `ialgo.h`
     * `interlayer.h`
