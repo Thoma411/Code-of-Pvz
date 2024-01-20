@@ -1,7 +1,7 @@
 /*
  * @Author: Thoma411
  * @Date: 2024-01-07 22:10:24
- * @LastEditTime: 2024-01-19 18:17:09
+ * @LastEditTime: 2024-01-20 17:39:29
  * @Description:
  */
 #include "interlayer.h"
@@ -42,6 +42,8 @@ int TEST_BG(bool isFreeze, bool isCling, bool isTarget, bool isWork)
     int ice_t = -1, stay_t = JDG_TIME(isFreeze, isTarget);
     if (isFreeze) // 若用冰
         ice_t = getRnd(1, 300);
+    if (isTarget) // 若是目标则必贴脸
+        isCling = true;
     int hits = CHT_BG(getRnd(1, 300), stay_t, ice_t, isCling, isWork);
     return hits;
 }

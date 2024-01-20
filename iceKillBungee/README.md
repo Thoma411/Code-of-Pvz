@@ -1,7 +1,7 @@
 <!--
  * @Author: Thoma411
  * @Date: 2023-11-13 21:38:31
- * @LastEditTime: 2024-01-19 21:05:08
+ * @LastEditTime: 2024-01-20 17:43:22
  * @Description: README & CHANGELOG . markdown
 -->
 # 简陋偷率测试器
@@ -39,6 +39,25 @@
 * 改用非逐帧计算，节省了大量在`底线矿.cpp`里的低效计算，加快了模拟速度
 * 虽然不一定能解决，但仍欢迎反馈使用时遇到的问题
 
+## 现有API
+
+### 声明
+
+```c++
+int TEST_YYG(bool isFreeze, bool isTarget, bool isWork);
+int TEST_DPG(bool isFreeze, bool isTarget, bool isWork);
+int TEST_BG(bool isFreeze, bool isCling, bool isTarget, bool isWork);
+int TEST_DC(bool isFreeze, bool isDCW, bool isWork);
+```
+
+### parameter(True/False, 标"*"的项为可选参数)
+
+* isFreeze:     是否用冰
+* isTarget*:    是否被抓(为T即指定蹦极要偷的植物, 地刺默认T, 其余F)
+* isWork*:      是否工作(即永动状态, 瓜默认T, 其余F)
+* isCling:      是否贴脸(指定瓜相对于蹦极的位置, 当瓜位于x列而蹦极位于x或x+1列时, 令此项为T)
+* isDCW*:       是否为地刺王(默认T, 测普通地刺请令此项为F)
+
 ## 更新日志
 
 单独写个CHANGELOG不是很直观，干脆就跟README并一起算了
@@ -71,3 +90,7 @@
 
 * 新增`interlayer.h`与`interlayer.cpp`以统一调用的函数
 * 就tm你冰瓜事多！摆烂不写了
+
+### 2024_01_20
+
+* API说明忘写了，补上
